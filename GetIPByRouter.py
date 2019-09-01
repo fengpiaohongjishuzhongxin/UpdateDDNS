@@ -1,5 +1,4 @@
 #!/usr/local/bin/python3
-# -*- coding:utf-8 -*-
 # Author: FengPiaoHong
 import requests
 import base64
@@ -36,5 +35,3 @@ def get_ip_Merlin(ip_address, username, userpwd):
             ip_list.append(w.childNodes[0].data[str_pos + len("ipaddr="):])
     return ip_list
 
-
-# print(get_ip("192.168.11.11", "Admin", "225588"))

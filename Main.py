@@ -1,10 +1,11 @@
 #!/usr/local/bin/python3
-# -*- coding:utf-8 -*-
 # Author: FengPiaoHong
 import sys
 import GetIPByRouter
 from UpdateAliyunDDNS import AliyunDDNS
 
+# 成功标志符
+Success = True
 
 # 操作阿里云DNS所需的参数
 ApiKey = sys.argv[1]
@@ -24,7 +25,7 @@ ip_list.reverse()
 ip_count = len(ip_list)
 # 如果长度不合法,说明获取失败或者不是拨号上网,直接退出
 if ip_count <= 0:
-    print("IP长度错误,当前IP长度: {ipLen}".format(ipLen=ip_count))
+    print("IP列表长度错误,当前IP长度: {ipLen}".format(ipLen=ip_count))
     exit(-1)
 print("成功获取路由器WAN IP: ", ip_list)
 
@@ -76,7 +77,8 @@ for subdomain in subdomains:
                 print("当前记录存与现在记录不同,已更新为{_ip}".format(_ip=ip_item))
             else:
                 print("当前记录修改失败,二级域名为{_subdomain}, 第{_count}条记录, IP为{_ip}, 错误信息为:{_msg}"
-                      .format(_subdomain=subdomain, _count=count_flag+1, _ip=ip_item), _msg=r["Message"])
+                      .format(_subdomain=subdomain, _count=count_flag+1, _ip=ip_item, _msg=r["Message"]))
+                Success = False
             count_flag += 1
         else:
             r = handle.add_record(
@@ -96,8 +98,125 @@ for subdomain in subdomains:
                 print("当前记录数{_count}不存在,现已增加,二级域名为{_subdomain}, 值为{_ip}".format(_count=count_flag + 1,
                                                                                 _subdomain=subdomain, _ip=ip_item))
             else:
-                print("当前记录修改失败,二级域名为{_subdomain}, 第{_count}条记录, IP为{_ip}, 错误信息为:{_msg}"
-                      .format(_subdomain=subdomain, _count=count_flag + 1, _ip=ip_item), _msg=r["Message"])
+                print("当前记录新增失败,二级域名为{_subdomain}, 第{_count}条记录, IP为{_ip}, 错误信息为:{_msg}"
+                      .format(_subdomain=subdomain, _count=count_flag + 1, _ip=ip_item, _msg=r["Message"]))
+                Success = False
             count_flag += 1
     pass
 
+
+if len(ip_list) >= 2:
+    # 分别登记双线路
+    # 登记 WAN 1 线路
+    print("正在准备 WAN 1 线路更新")
+    subdomain = "wan1"
+    ip_item = ip_list[0]
+    record = handle.get_record(subdomain)
+    while record is None:
+        record = handle.get_record(subdomain)
+    if not record:
+        # 没有 WAN 1 线路DNS记录,则新增
+        r = handle.add_record(
+            SubDomain=subdomain,
+            SubIp=ip_item,
+            SubTpye="A"
+        )
+        # 为了防止Timeout导致新增失败,则加入循环
+        while r is None:
+            r = handle.add_record(
+                SubDomain=subdomain,
+                SubIp=ip_item,
+                SubTpye="A"
+            )
+
+        if r["Result"]:
+            print("当前记录不存在,现已增加,二级域名为{_subdomain}, 值为{_ip}".format(_subdomain=subdomain, _ip=ip_item))
+        else:
+            print("当前记录新增失败,二级域名为{_subdomain},IP为{_ip}, 错误信息为:{_msg}"
+                  .format(_subdomain=subdomain, _ip=ip_item, _msg=r["Message"]))
+    else:
+        # 有 WAN 1 线路,判断需不需要更新
+        if record[0]['Value'] == ip_item:
+            print("当前记录 {_subdomain} 存与现在记录相同,无需修改".format(_subdomain=subdomain))
+        else:
+            # WAN 1 线路需要更新
+            r = handle.update_record(
+                SubDomain=subdomain,
+                SubIp=ip_item,
+                SubRecordId=record[0]['RecordId'],
+                SubTpye="A"
+            )
+            # 为了防止Timeout导致更新失败,则加入循环
+            while r is None:
+                r = handle.update_record(
+                    SubDomain=subdomain,
+                    SubIp=ip_item,
+                    SubRecordId=record[0]['RecordId'],
+                    SubTpye="A"
+                )
+            if r["Result"]:
+                print("当前记录存与现在记录不同,已更新为{_ip}".format(_ip=ip_item))
+            else:
+                print("当前记录修改失败,二级域名为{_subdomain},IP为{_ip}, 错误信息为:{_msg}"
+                      .format(_subdomain=subdomain, _ip=ip_item, _msg=r["Message"]))
+                Success = False
+
+    print("正在准备 WAN 2 线路更新")
+    # 登记 WAN 2 线路
+    subdomain = "wan2"
+    ip_item = ip_list[1]
+    record = handle.get_record(subdomain)
+    while record is None:
+        record = handle.get_record(subdomain)
+    if not record:
+        # 没有 WAN 2 线路DNS记录,则新增
+        r = handle.add_record(
+            SubDomain=subdomain,
+            SubIp=ip_item,
+            SubTpye="A"
+        )
+        # 为了防止Timeout导致新增失败,则加入循环
+        while r is None:
+            r = handle.add_record(
+                SubDomain=subdomain,
+                SubIp=ip_item,
+                SubTpye="A"
+            )
+
+        if r["Result"]:
+            print("当前记录不存在,现已增加,二级域名为{_subdomain}, 值为{_ip}".format(_subdomain=subdomain, _ip=ip_item))
+        else:
+            print("当前记录新增失败,二级域名为{_subdomain},IP为{_ip}, 错误信息为:{_msg}"
+                  .format(_subdomain=subdomain, _ip=ip_item, _msg=r["Message"]))
+    else:
+        # 有 WAN 2 线路,判断需不需要更新
+        if record[0]['Value'] == ip_item:
+            print("当前记录 {_subdomain} 存与现在记录相同,无需修改".format(_subdomain=subdomain))
+        else:
+            # WAN 2 线路需要更新
+            r = handle.update_record(
+                SubDomain=subdomain,
+                SubIp=ip_item,
+                SubRecordId=record[0]['RecordId'],
+                SubTpye="A"
+            )
+            # 为了防止Timeout导致更新失败,则加入循环
+            while r is None:
+                r = handle.update_record(
+                    SubDomain=subdomain,
+                    SubIp=ip_item,
+                    SubRecordId=record[0]['RecordId'],
+                    SubTpye="A"
+                )
+            if r["Result"]:
+                print("当前记录存与现在记录不同,已更新为{_ip}".format(_ip=ip_item))
+            else:
+                print("当前记录修改失败,二级域名为{_subdomain},IP为{_ip}, 错误信息为:{_msg}"
+                      .format(_subdomain=subdomain, _ip=ip_item, _msg=r["Message"]))
+                Success = False
+
+
+if Success:
+    exit(0)
+else:
+    exit(-1)

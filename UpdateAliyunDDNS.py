@@ -1,5 +1,4 @@
 #!/usr/local/bin/python3
-# -*- coding:utf-8 -*-
 # Author: FengPiaoHong
 import time
 from hashlib import sha1
@@ -394,18 +393,3 @@ class AliyunDDNS:
             js["Result"] = False
         return js
 
-
-'''
-x = UpdateAliyunDDNS("LTAI4Fm3ho4w6nREbtDnkYAP", "UNLJsYQv7yh633NXdAAPme01ov1VxM", "fengpiaohong.vip", "smtp")
-
-print(x.add_record(SubIp="2.2.2.2", SubDomain="test", SubTpye="A"))
-r = x.get_record("test")
-print(r)
-# print(x.get_record("test"))
-# print(x.get_all_records())
-# print(x.add_record(SubIp="2.2.2.2", SubDomain="test", SubTpye="A"))
-# print(x.update_record(SubDomain="test", SubIp="4.4.4.4", SubTpye="A", SubRecordId=r[0]["RecordId"]))
-print(x.delete_record(r[0]["RecordId"]))
-# ss = hmac.new("fengpiaohong".encode("utf-8"),"fengpiaoxu".encode("utf-8"),sha1).digest();
-# print(str(base64.b64encode(ss), "utf-8"))
-'''
