@@ -1,10 +1,13 @@
+#!/usr/local/bin/python3
+# -*- coding:utf-8 -*-
+# Author: FengPiaoHong
 import requests
 import base64
 from xml.dom.minidom import parse
 import xml.dom.minidom
 
 
-def get_ip(ip_address, username, userpwd):
+def get_ip_Merlin(ip_address, username, userpwd):
     r = requests.get("http://{IP}/Main_Login.asp".format(IP=ip_address))
     userdata = base64.b64encode(("{user}:{pwd}".format(user=username, pwd=userpwd)).encode("utf-8"))
     userdata = str(userdata, "GBK")
@@ -17,6 +20,8 @@ def get_ip(ip_address, username, userpwd):
     r.encoding = "utf-8"
     # print(r.text)
 
+    #路由器登录了得退出,否则需要管理路由器的时候可能就登录不进去了
+    requests.get("http://{IP}/Main_Login.asp".format(IP=ip_address))
     ip_list = []
 
     # 使用minidom解析器打开 XML 文档
